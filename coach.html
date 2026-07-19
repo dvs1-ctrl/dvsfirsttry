@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Full Spectrum — Coach Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
+<script>
+window.FS_CONFIG = {
+  url: "https://gocgaifjkycgesmtjgrv.supabase.co",
+  anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvY2dhaWZqa3ljZ2VzbXRqZ3J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0MDkzMDgsImV4cCI6MjA5OTk4NTMwOH0.8iKgp9o1vPv0VQlxwo86SHDXcq4EXOundXlIslW--6c"
+};
+</script>
+<style>
+  :root{
+    --bg:#141f25; --surface:#1b2930; --surface2:#22323a; --surface3:#2a3d46;
+    --border:#2c3d46; --border2:#3a4f5a;
+    --text:#f1ede4; --muted:#8fa3ad; --muted2:#a8bcc6;
+    --gold:#d2ab66; --accent:#d2ab66; --blue:#5f95a6; --orange:#cf8a5c; --green:#7ba05b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+       font-family:'Hanken Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+       font-size:14px;line-height:1.5}
+  h1,h2,h3{font-family:'Saira Condensed','Arial Narrow',sans-serif;
+       font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin:0}
+  a{color:var(--gold)}
+  .lbl{font-size:10px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted)}
+  input,select,textarea{padding:9px 11px;background:var(--surface2);border:1px solid var(--border2);
+       color:var(--text);border-radius:7px;outline:none;font-size:14px;font-family:inherit}
+  input:focus,select:focus{border-color:var(--gold)}
+  button{font-family:'Saira Condensed','Arial Narrow',sans-serif;font-weight:700;font-size:13px;
+       letter-spacing:1px;text-transform:uppercase;padding:9px 15px;border-radius:7px;
+       border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer}
+  button:hover{border-color:var(--gold)}
+  button.primary{background:var(--gold);color:#000;border-color:var(--gold)}
+  button.ghost{background:transparent}
+  button:disabled{opacity:.45;cursor:default}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
+     color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--border2)}
+  td{padding:9px 10px;border-bottom:1px solid var(--border)}
+  tr:hover td{background:var(--surface2)}
+  .pill{display:inline-block;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;
+        padding:3px 8px;border-radius:5px}
+  .pill.done{background:rgba(123,160,91,.18);color:var(--green)}
+  .pill.prog{background:rgba(210,171,102,.15);color:var(--gold)}
+  .big{font-family:'Saira Condensed','Arial Narrow',sans-serif;font-size:30px;font-weight:800;line-height:1}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .muted{color:var(--muted)}
+  .err{color:var(--orange);font-size:13px;min-height:18px}
+  .ok{color:var(--green);font-size:13px}
+  #clientList div.ci{padding:11px 13px;border:1px solid var(--border);border-radius:9px;
+       margin-bottom:7px;cursor:pointer}
+  #clientList div.ci:hover{border-color:var(--border2);background:var(--surface2)}
+  #clientList div.ci.sel{border-color:var(--gold);background:var(--surface2)}
+</style>
+</head>
+<body>
+
+<!-- ============================== LOGIN ============================== -->
+<div id="login" style="max-width:380px;margin:12vh auto;padding:24px">
+  <h1 style="font-size:34px;font-style:italic;line-height:.95">Full<br>Spectrum</h1>
+  <div class="lbl" style="color:var(--gold);margin:10px 0 26px">Coach Dashboard</div>
+  <input id="email" type="email" placeholder="Email" autocomplete="username" style="width:100%;margin-bottom:9px">
+  <input id="pass" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;margin-bottom:14px">
+  <button class="primary" onclick="doLogin()" style="width:100%;padding:13px">Sign In</button>
+  <div id="loginErr" class="err" style="margin-top:12px"></div>
+</div>
+
+<!-- ============================== APP ============================== -->
+<div id="app" style="display:none;max-width:1240px;margin:0 auto;padding:22px">
+
+  <div class="row" style="justify-content:space-between;margin-bottom:22px">
+    <div>
+      <h1 style="font-size:24px;font-style:italic">Full Spectrum</h1>
+      <div class="lbl" style="color:var(--gold)">Coach Dashboard</div>
+    </div>
+    <div class="row">
+      <span class="muted" id="whoami" style="font-size:13px"></span>
+      <a href="index.html"><button class="ghost">My Training App</button></a>
+      <button class="ghost" onclick="signOut()">Sign Out</button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start">
+
+    <!-- ---------------- LEFT: clients ---------------- -->
+    <div>
+      <div class="card">
+        <div class="lbl" style="margin-bottom:12px">Clients</div>
+        <div id="clientList"><div class="muted">Loading…</div></div>
+      </div>
+
+      <div class="card">
+        <div class="lbl" style="margin-bottom:12px">Add a Client</div>
+        <input id="nName"  placeholder="Full name"    style="width:100%;margin-bottom:8px">
+        <input id="nEmail" type="email" placeholder="Email" style="width:100%;margin-bottom:8px">
+        <input id="nPass"  placeholder="Temporary password" style="width:100%;margin-bottom:12px">
+        <button class="primary" onclick="createClient()" style="width:100%">Create Client</button>
+        <div id="newErr" class="err" style="margin-top:10px"></div>
+        <div class="muted" style="font-size:11px;margin-top:8px;line-height:1.5">
+          They sign in at the athlete app with this email and password.
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------------- RIGHT: detail ---------------- -->
+    <div id="detail">
+      <div class="card"><div class="muted">Select a client to view their training.</div></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var sb, me, profile, clients = [], programs = [], selected = null;
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g, function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+/* ------------------------------------------------------------------ AUTH */
+sb = window.supabase.createClient(FS_CONFIG.url, FS_CONFIG.anonKey,
+      { auth:{ persistSession:true, autoRefreshToken:true, storageKey:'fs-coach-auth' } });
+
+function doLogin(){
+  var e = $('email').value.trim(), p = $('pass').value;
+  $('loginErr').textContent = '';
+  sb.auth.signInWithPassword({ email:e, password:p }).then(function(r){
+    if (r.error) { $('loginErr').textContent = r.error.message; return; }
+    afterLogin(r.data.user);
+  });
+}
+$('pass').addEventListener('keydown', function(ev){ if (ev.key === 'Enter') doLogin(); });
+
+function signOut(){ sb.auth.signOut().then(function(){ location.reload(); }); }
+
+sb.auth.getSession().then(function(r){
+  if (r.data && r.data.session) afterLogin(r.data.session.user);
+});
+
+function afterLogin(u){
+  me = u;
+  sb.from('profiles').select('*').eq('id', u.id).single().then(function(r){
+    profile = r.data;
+    if (!profile || profile.role !== 'coach') {
+      $('loginErr').textContent = 'This account is not a coach account.';
+      sb.auth.signOut();
+      return;
+    }
+    $('login').style.display = 'none';
+    $('app').style.display = 'block';
+    $('whoami').textContent = profile.email;
+    loadPrograms();
+    loadClients();
+  });
+}
+
+/* -------------------------------------------------------------- PROGRAMS */
+function loadPrograms(){
+  sb.from('programs').select('id,name,num_weeks,days_per_week')
+    .order('created_at').then(function(r){ programs = r.data || []; });
+}
+
+/* --------------------------------------------------------------- CLIENTS */
+function loadClients(){
+  sb.from('coach_athletes')
+    .select('athlete_id, profiles!coach_athletes_athlete_id_fkey(id,full_name,email,role)')
+    .eq('coach_id', me.id).eq('active', true)
+    .then(function(r){
+      if (r.error) { $('clientList').innerHTML = '<div class="err">'+esc(r.error.message)+'</div>'; return; }
+      clients = (r.data || []).map(function(x){ return x.profiles; }).filter(Boolean);
+      renderClients();
+    });
+}
+
+function renderClients(){
+  if (!clients.length) { $('clientList').innerHTML = '<div class="muted">No clients yet.</div>'; return; }
+  $('clientList').innerHTML = clients.map(function(c){
+    return '<div class="ci'+(selected && selected.id===c.id?' sel':'')+'" onclick="selectClient(\''+c.id+'\')">' +
+      '<div style="font-weight:600">'+esc(c.full_name || c.email)+'</div>' +
+      '<div class="muted" style="font-size:11px">'+esc(c.email)+'</div></div>';
+  }).join('');
+}
+
+function createClient(){
+  var name = $('nName').value.trim(),
+      email = $('nEmail').value.trim(),
+      pass  = $('nPass').value;
+  $('newErr').textContent = '';
+  if (!email || !pass) { $('newErr').textContent = 'Email and password are required.'; return; }
+  if (pass.length < 6) { $('newErr').textContent = 'Password must be at least 6 characters.'; return; }
+
+  // A throwaway client so signing them up does not sign YOU out.
+  var tmp = window.supabase.createClient(FS_CONFIG.url, FS_CONFIG.anonKey,
+        { auth:{ persistSession:false, autoRefreshToken:false, storageKey:'fs-tmp-'+Date.now() } });
+
+  tmp.auth.signUp({ email:email, password:pass, options:{ data:{ full_name:name } } })
+    .then(function(r){
+      if (r.error) { $('newErr').textContent = r.error.message; return; }
+      var newId = r.data.user && r.data.user.id;
+      if (!newId) { $('newErr').textContent = 'Created, but no ID returned. Check Authentication → Users.'; return; }
+
+      return sb.from('coach_athletes').insert({ coach_id: me.id, athlete_id: newId })
+        .then(function(r2){
+          if (r2.error) { $('newErr').textContent = 'User made, link failed: '+r2.error.message; return; }
+          $('nName').value = $('nEmail').value = $('nPass').value = '';
+          $('newErr').innerHTML = '<span class="ok">Client created.</span>';
+          loadClients();
+        });
+    });
+}
+
+/* ---------------------------------------------------------------- DETAIL */
+function selectClient(id){
+  selected = clients.filter(function(c){ return c.id === id; })[0];
+  renderClients();
+  renderDetail();
+}
+
+function renderDetail(){
+  var c = selected;
+  $('detail').innerHTML =
+    '<div class="card">' +
+      '<div class="row" style="justify-content:space-between">' +
+        '<div><h2 style="font-size:22px">'+esc(c.full_name || c.email)+'</h2>' +
+        '<div class="muted" style="font-size:12px">'+esc(c.email)+'</div></div>' +
+        '<div class="row" id="assignBox"></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="row" style="gap:16px;align-items:stretch;margin-bottom:16px">' +
+      '<div class="card" style="flex:1;margin:0"><div class="lbl">Sessions Logged</div>' +
+        '<div class="big" id="statSessions">—</div></div>' +
+      '<div class="card" style="flex:1;margin:0"><div class="lbl">Latest Weight</div>' +
+        '<div class="big" id="statWeight">—</div></div>' +
+      '<div class="card" style="flex:1;margin:0"><div class="lbl">Last Trained</div>' +
+        '<div class="big" id="statLast" style="font-size:20px">—</div></div>' +
+    '</div>' +
+    '<div class="card"><div class="lbl" style="margin-bottom:12px">Body Weight</div>' +
+      '<div style="height:210px"><canvas id="bwChart"></canvas></div></div>' +
+    '<div class="card"><div class="lbl" style="margin-bottom:12px">Session History</div>' +
+      '<div id="sessTable" class="muted">Loading…</div></div>' +
+    '<div class="card"><div class="lbl" style="margin-bottom:12px">Recorded Maxes</div>' +
+      '<div id="maxBox" class="muted">Loading…</div></div>';
+
+  loadAssignment();
+  loadSessions();
+  loadBodyWeights();
+  loadMaxes();
+}
+
+function loadAssignment(){
+  sb.from('assignments').select('id,status,start_date,programs(name)')
+    .eq('athlete_id', selected.id).eq('status','active').maybeSingle()
+    .then(function(r){
+      var a = r.data;
+      var opts = programs.map(function(p){
+        return '<option value="'+p.id+'">'+esc(p.name)+' ('+p.num_weeks+'wk)</option>'; }).join('');
+      $('assignBox').innerHTML = a
+        ? '<div style="text-align:right"><div class="lbl">Current Program</div>' +
+          '<div style="font-weight:600">'+esc(a.programs ? a.programs.name : '—')+'</div>' +
+          '<div class="muted" style="font-size:11px">since '+esc(a.start_date)+'</div></div>' +
+          '<button class="ghost" onclick="unassign(\''+a.id+'\')">Unassign</button>'
+        : '<select id="progSel">'+opts+'</select><button class="primary" onclick="assign()">Assign Program</button>';
+    });
+}
+
+function assign(){
+  var pid = $('progSel').value;
+  sb.from('assignments').insert({
+    athlete_id: selected.id, program_id: pid, assigned_by: me.id, status:'active'
+  }).then(function(r){
+    if (r.error) alert(r.error.message);
+    loadAssignment();
+  });
+}
+
+function unassign(id){
+  if (!confirm('End this program assignment? Logged sessions are kept.')) return;
+  sb.from('assignments').update({ status:'completed', end_date:new Date().toISOString().slice(0,10) })
+    .eq('id', id).then(loadAssignment);
+}
+
+function loadSessions(){
+  sb.from('coach_session_overview').select('*')
+    .eq('athlete_id', selected.id)
+    .order('session_date', { ascending:false })
+    .then(function(r){
+      if (r.error) { $('sessTable').innerHTML = '<div class="err">'+esc(r.error.message)+'</div>'; return; }
+      var rows = r.data || [];
+      var done = rows.filter(function(x){ return x.status === 'completed'; });
+      $('statSessions').textContent = done.length + ' / ' + rows.length;
+      $('statLast').textContent = rows.length ? (rows[0].session_date || '—') : '—';
+
+      if (!rows.length) { $('sessTable').innerHTML = '<div class="muted">Nothing logged yet.</div>'; return; }
+
+      $('sessTable').innerHTML =
+        '<table><thead><tr><th>Date</th><th>Wk</th><th>Day</th><th>Primary Lift</th>' +
+        '<th>Weight</th><th>ROLS</th><th>RPE</th><th>Asst Sets</th><th>BW</th><th>Status</th></tr></thead><tbody>' +
+        rows.map(function(s){
+          return '<tr>' +
+            '<td>'+esc(s.session_date)+'</td>' +
+            '<td>'+esc(s.week)+'</td>' +
+            '<td>'+esc(s.day_label || ('Day '+(s.day_index+1)))+'</td>' +
+            '<td>'+esc(s.primary_exercise || '—')+'</td>' +
+            '<td>'+(s.primary_weight != null ? esc(s.primary_weight)+' kg' : '—')+'</td>' +
+            '<td style="color:var(--gold);font-weight:700">'+(s.rols != null ? esc(s.rols) : '—')+'</td>' +
+            '<td>'+(s.rpe != null ? esc(s.rpe) : '—')+'</td>' +
+            '<td>'+esc(s.assistance_sets)+'</td>' +
+            '<td>'+(s.body_weight_kg != null ? esc(s.body_weight_kg) : '—')+'</td>' +
+            '<td>'+(s.status === 'completed'
+                     ? '<span class="pill done">Done</span>'
+                     : '<span class="pill prog">Open</span>')+'</td>' +
+          '</tr>'; }).join('') +
+        '</tbody></table>';
+    });
+}
+
+function loadBodyWeights(){
+  sb.from('body_weights').select('weight_kg,measured_on')
+    .eq('athlete_id', selected.id).order('measured_on')
+    .then(function(r){
+      var d = r.data || [];
+      $('statWeight').textContent = d.length ? (d[d.length-1].weight_kg + ' kg') : '—';
+      var cv = $('bwChart'); if (!cv) return;
+      if (cv._chart) cv._chart.destroy();
+      if (d.length < 2) {
+        cv.parentElement.innerHTML = '<div class="muted">Needs at least two weigh-ins to chart.</div>';
+        return;
+      }
+      cv._chart = new Chart(cv, {
+        type:'line',
+        data:{ labels:d.map(function(x){ return x.measured_on; }),
+               datasets:[{ data:d.map(function(x){ return x.weight_kg; }),
+                 borderColor:'#d2ab66', backgroundColor:'rgba(210,171,102,.13)',
+                 borderWidth:2, pointRadius:3, tension:.3, fill:true }] },
+        options:{ responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{ display:false } },
+          scales:{ x:{ ticks:{ color:'#8fa3ad', font:{size:10} }, grid:{ color:'#2c3d46' } },
+                   y:{ ticks:{ color:'#8fa3ad', font:{size:10},
+                        callback:function(v){ return v+'kg'; } }, grid:{ color:'#2c3d46' } } } }
+      });
+    });
+}
+
+function loadMaxes(){
+  sb.from('maxes').select('reps,weight_kg,achieved_on,source,exercises(name)')
+    .eq('athlete_id', selected.id).eq('is_current', true)
+    .order('achieved_on', { ascending:false })
+    .then(function(r){
+      var d = r.data || [];
+      if (!d.length) { $('maxBox').innerHTML = '<div class="muted">No maxes recorded.</div>'; return; }
+      $('maxBox').innerHTML =
+        '<table><thead><tr><th>Exercise</th><th>Rep Max</th><th>Weight</th>' +
+        '<th>Date</th><th>Source</th></tr></thead><tbody>' +
+        d.map(function(m){
+          return '<tr><td>'+esc(m.exercises ? m.exercises.name : '—')+'</td>' +
+            '<td>'+esc(m.reps)+'RM</td>' +
+            '<td style="color:var(--gold);font-weight:700">'+esc(m.weight_kg)+' kg</td>' +
+            '<td>'+esc(m.achieved_on)+'</td>' +
+            '<td class="muted">'+esc(m.source)+'</td></tr>'; }).join('') +
+        '</tbody></table>';
+    });
+}
+</script>
+</body>
+</html>
