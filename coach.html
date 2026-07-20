@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Full Spectrum — Coach Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
+<script>
+window.FS_CONFIG = {
+  url: "https://gocgaifjkycgesmtjgrv.supabase.co",
+  anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvY2dhaWZqa3ljZ2VzbXRqZ3J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0MDkzMDgsImV4cCI6MjA5OTk4NTMwOH0.8iKgp9o1vPv0VQlxwo86SHDXcq4EXOundXlIslW--6c"
+};
+</script>
+<style>
+  :root{
+    --bg:#141f25;--surface:#1b2930;--surface2:#22323a;--surface3:#2a3d46;
+    --border:#2c3d46;--border2:#3a4f5a;--text:#f1ede4;--muted:#8fa3ad;--muted2:#a8bcc6;
+    --gold:#d2ab66;--blue:#5f95a6;--orange:#cf8a5c;--green:#7ba05b;--purple:#a889a6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:'Hanken Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.5}
+  h1,h2,h3{font-family:'Saira Condensed','Arial Narrow',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin:0}
+  a{color:var(--gold)}
+  .lbl{font-size:10px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted)}
+  input,select,textarea{padding:8px 10px;background:var(--surface2);border:1px solid var(--border2);
+    color:var(--text);border-radius:6px;outline:none;font-size:13px;font-family:inherit;width:100%}
+  input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+  label.f{display:block;margin-bottom:10px}
+  label.f>span{display:block;font-size:10px;font-weight:800;letter-spacing:1.5px;
+    text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+  .hint{font-size:11px;color:var(--muted);margin-top:2px}
+  button{font-family:'Saira Condensed','Arial Narrow',sans-serif;font-weight:700;font-size:12px;
+    letter-spacing:1px;text-transform:uppercase;padding:8px 13px;border-radius:6px;
+    border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;width:auto}
+  button:hover{border-color:var(--gold)}
+  button.primary{background:var(--gold);color:#000;border-color:var(--gold)}
+  button.danger{border-color:var(--orange);color:var(--orange)}
+  button.sm{padding:4px 9px;font-size:11px}
+  button:disabled{opacity:.45;cursor:default}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:16px;margin-bottom:14px}
+  .card.tight{padding:12px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--muted);padding:7px 9px;border-bottom:1px solid var(--border2)}
+  td{padding:8px 9px;border-bottom:1px solid var(--border)}
+  tr:hover td{background:var(--surface2)}
+  .pill{display:inline-block;font-size:10px;font-weight:800;letter-spacing:1px;
+    text-transform:uppercase;padding:2px 7px;border-radius:4px}
+  .pill.done{background:rgba(123,160,91,.18);color:var(--green)}
+  .pill.prog{background:rgba(210,171,102,.15);color:var(--gold)}
+  .pill.pri{background:var(--gold);color:#000}
+  .pill.ss{background:var(--orange);color:#000}
+  .pill.ci{background:var(--blue);color:#000}
+  .pill.tri{background:var(--purple);color:#000}
+  .pill.sing{background:var(--muted2);color:#000}
+  .big{font-family:'Saira Condensed','Arial Narrow',sans-serif;font-size:28px;font-weight:800;line-height:1}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .muted{color:var(--muted)}
+  .err{color:var(--orange);font-size:13px;min-height:16px}
+  .ok{color:var(--green);font-size:13px}
+  .tabs{display:flex;gap:6px;border-bottom:1px solid var(--border);margin-bottom:18px}
+  .tab{padding:10px 18px;border:none;border-bottom:2px solid transparent;background:none;
+    color:var(--muted);border-radius:0}
+  .tab.on{color:var(--gold);border-bottom-color:var(--gold)}
+  .listitem{padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer}
+  .listitem:hover{border-color:var(--border2);background:var(--surface2)}
+  .listitem.sel{border-color:var(--gold);background:var(--surface2)}
+  .blockcard{border:1px solid var(--border2);border-radius:9px;padding:12px;margin-bottom:10px;background:var(--surface2)}
+  .itemrow{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:10px;margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<div id="login" style="max-width:370px;margin:12vh auto;padding:22px">
+  <h1 style="font-size:32px;font-style:italic;line-height:.95">Full<br>Spectrum</h1>
+  <div class="lbl" style="color:var(--gold);margin:10px 0 24px">Coach Dashboard</div>
+  <input id="email" type="email" placeholder="Email" autocomplete="username" style="margin-bottom:8px">
+  <input id="pass" type="password" placeholder="Password" autocomplete="current-password" style="margin-bottom:13px">
+  <button class="primary" onclick="doLogin()" style="width:100%;padding:12px">Sign In</button>
+  <div id="loginErr" class="err" style="margin-top:11px"></div>
+</div>
+
+<div id="app" style="display:none;max-width:1320px;margin:0 auto;padding:20px">
+  <div class="row" style="justify-content:space-between;margin-bottom:16px">
+    <div>
+      <h1 style="font-size:22px;font-style:italic">Full Spectrum</h1>
+      <div class="lbl" style="color:var(--gold)">Coach Dashboard</div>
+    </div>
+    <div class="row">
+      <span class="muted" id="whoami" style="font-size:12px"></span>
+      <a href="index.html"><button>My Training App</button></a>
+      <button onclick="signOut()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" id="tab-clients"   onclick="showTab('clients')">Clients</button>
+    <button class="tab"    id="tab-exercises" onclick="showTab('exercises')">Exercise Library</button>
+    <button class="tab"    id="tab-programmes" onclick="showTab('programmes')">Programmes</button>
+  </div>
+
+  <div id="pane-clients"></div>
+  <div id="pane-exercises" style="display:none"></div>
+  <div id="pane-programmes" style="display:none"></div>
+</div>
+
+<script>
+/* ===================================================================== */
+var sb, me, profile;
+var TAX = {}, EXERCISES = [], SCHEMES = [], PROGRAMS = [], CLIENTS = [];
+var selClient = null, selProgram = null, selDay = 0, selExercise = null;
+
+function $(id){ return document.getElementById(id); }
+function h(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function tx(cat){ return (TAX[cat]||[]); }
+function txOpts(cat, sel, blank){
+  var o = blank ? '<option value="">— none —</option>' : '';
+  return o + tx(cat).map(function(t){
+    return '<option value="'+t.id+'"'+(t.id===sel?' selected':'')+'>'+h(t.label)+'</option>'; }).join('');
+}
+function nums(s){ return String(s||'').split(',').map(function(x){return x.trim();})
+  .filter(function(x){return x!=='';}).map(Number).filter(function(n){return !isNaN(n);}); }
+function strs(s){ return String(s||'').split(',').map(function(x){return x.trim();})
+  .filter(function(x){return x!=='';}); }
+function arrTxt(a){ return Array.isArray(a) ? a.join(', ') : ''; }
+function toast(el, msg, good){
+  var e = $(el); if(!e) return;
+  e.innerHTML = good ? '<span class="ok">'+h(msg)+'</span>' : '<span class="err">'+h(msg)+'</span>';
+  setTimeout(function(){ if(e) e.innerHTML=''; }, 4000);
+}
+
+/* ============================== AUTH ================================= */
+sb = window.supabase.createClient(FS_CONFIG.url, FS_CONFIG.anonKey,
+  { auth:{ persistSession:true, autoRefreshToken:true, storageKey:'fs-coach-auth' } });
+
+function doLogin(){
+  $('loginErr').textContent='';
+  sb.auth.signInWithPassword({ email:$('email').value.trim(), password:$('pass').value })
+    .then(function(r){ if(r.error){$('loginErr').textContent=r.error.message;return;} afterLogin(r.data.user); });
+}
+$('pass').addEventListener('keydown',function(e){ if(e.key==='Enter') doLogin(); });
+function signOut(){ sb.auth.signOut().then(function(){ location.reload(); }); }
+sb.auth.getSession().then(function(r){ if(r.data&&r.data.session) afterLogin(r.data.session.user); });
+
+function afterLogin(u){
+  me=u;
+  sb.from('profiles').select('*').eq('id',u.id).single().then(function(r){
+    profile=r.data;
+    if(!profile||profile.role!=='coach'){
+      $('loginErr').textContent='This account is not a coach account.'; sb.auth.signOut(); return;
+    }
+    $('login').style.display='none'; $('app').style.display='block';
+    $('whoami').textContent=profile.email;
+    bootstrap();
+  });
+}
+
+function bootstrap(){
+  Promise.all([
+    sb.from('taxonomy').select('*').eq('active',true).order('sort_order'),
+    sb.from('warmup_schemes').select('*').order('sort_order'),
+    sb.from('exercises').select('*').order('name'),
+    sb.from('programs').select('*').order('name')
+  ]).then(function(res){
+    TAX={};
+    (res[0].data||[]).forEach(function(t){ (TAX[t.category]=TAX[t.category]||[]).push(t); });
+    SCHEMES=res[1].data||[]; EXERCISES=res[2].data||[]; PROGRAMS=res[3].data||[];
+    loadClients();
+    renderExercises();
+    renderProgrammes();
+  });
+}
+
+function showTab(n){
+  ['clients','exercises','programmes'].forEach(function(t){
+    $('pane-'+t).style.display = (t===n?'block':'none');
+    $('tab-'+t).className = 'tab' + (t===n?' on':'');
+  });
+}
+
+/* ============================ CLIENTS ================================ */
+function loadClients(){
+  sb.from('coach_athletes')
+    .select('athlete_id, profiles!coach_athletes_athlete_id_fkey(id,full_name,email,role)')
+    .eq('coach_id',me.id).eq('active',true)
+    .then(function(r){
+      CLIENTS=(r.data||[]).map(function(x){return x.profiles;}).filter(Boolean);
+      renderClientPane();
+    });
+}
+
+function renderClientPane(){
+  $('pane-clients').innerHTML =
+   '<div style="display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start">'+
+     '<div>'+
+       '<div class="card"><div class="lbl" style="margin-bottom:10px">Clients</div>'+
+         '<div id="clientList"></div></div>'+
+       '<div class="card"><div class="lbl" style="margin-bottom:10px">Add a Client</div>'+
+         '<label class="f"><span>Full name</span><input id="nName"></label>'+
+         '<label class="f"><span>Email</span><input id="nEmail" type="email"></label>'+
+         '<label class="f"><span>Temporary password</span><input id="nPass"></label>'+
+         '<button class="primary" onclick="createClient()" style="width:100%">Create Client</button>'+
+         '<div id="newErr" class="err" style="margin-top:8px"></div></div>'+
+     '</div>'+
+     '<div id="clientDetail"><div class="card muted">Select a client.</div></div>'+
+   '</div>';
+  renderClientList();
+  if (selClient) renderClientDetail();
+}
+
+function renderClientList(){
+  var el=$('clientList'); if(!el) return;
+  el.innerHTML = CLIENTS.length ? CLIENTS.map(function(c){
+    return '<div class="listitem'+(selClient&&selClient.id===c.id?' sel':'')+'" onclick="selectClient(\''+c.id+'\')">'+
+      '<div style="font-weight:600">'+h(c.full_name||c.email)+'</div>'+
+      '<div class="muted" style="font-size:11px">'+h(c.email)+'</div></div>';
+  }).join('') : '<div class="muted">No clients yet.</div>';
+}
+
+function createClient(){
+  var name=$('nName').value.trim(), email=$('nEmail').value.trim(), pass=$('nPass').value;
+  if(!email||pass.length<6){ toast('newErr','Email required, password 6+ characters.'); return; }
+  var tmp=window.supabase.createClient(FS_CONFIG.url,FS_CONFIG.anonKey,
+    {auth:{persistSession:false,autoRefreshToken:false,storageKey:'fs-tmp-'+Date.now()}});
+  tmp.auth.signUp({email:email,password:pass,options:{data:{full_name:name}}}).then(function(r){
+    if(r.error){ toast('newErr',r.error.message); return; }
+    var nid=r.data.user&&r.data.user.id;
+    if(!nid){ toast('newErr','Created, but no ID returned.'); return; }
+    return sb.from('coach_athletes').insert({coach_id:me.id,athlete_id:nid}).then(function(r2){
+      if(r2.error){ toast('newErr','User made, link failed: '+r2.error.message); return; }
+      $('nName').value=$('nEmail').value=$('nPass').value='';
+      toast('newErr','Client created.',true); loadClients();
+    });
+  });
+}
+
+function selectClient(id){
+  selClient=CLIENTS.filter(function(c){return c.id===id;})[0];
+  renderClientList(); renderClientDetail();
+}
+
+function renderClientDetail(){
+  var c=selClient;
+  $('clientDetail').innerHTML =
+    '<div class="card"><div class="row" style="justify-content:space-between">'+
+      '<div><h2 style="font-size:20px">'+h(c.full_name||c.email)+'</h2>'+
+      '<div class="muted" style="font-size:12px">'+h(c.email)+'</div></div>'+
+      '<div id="progressBox" class="muted" style="text-align:right;font-size:12px"></div>'+
+    '</div></div>'+
+    '<div class="card"><div class="lbl" style="margin-bottom:10px">Programme Assignment</div>'+
+      '<div id="assignBox"></div></div>'+
+    '<div class="row" style="gap:14px;margin-bottom:14px">'+
+      '<div class="card" style="flex:1;margin:0"><div class="lbl">Sessions</div><div class="big" id="statS">—</div></div>'+
+      '<div class="card" style="flex:1;margin:0"><div class="lbl">Latest Weight</div><div class="big" id="statW">—</div></div>'+
+      '<div class="card" style="flex:1;margin:0"><div class="lbl">Last Trained</div><div class="big" id="statL" style="font-size:18px">—</div></div>'+
+    '</div>'+
+    '<div class="card"><div class="lbl" style="margin-bottom:10px">Body Weight</div>'+
+      '<div style="height:200px"><canvas id="bwChart"></canvas></div></div>'+
+    '<div class="card"><div class="lbl" style="margin-bottom:10px">Recorded Maxes</div>'+
+      '<div id="maxAdd" class="row" style="margin-bottom:10px;align-items:flex-end"></div>'+
+      '<div id="maxBox" class="muted">Loading…</div></div>'+
+    '<div class="card"><div class="lbl" style="margin-bottom:10px">Session History</div>'+
+      '<div id="sessTable" class="muted">Loading…</div></div>';
+  loadAssignment(); loadProgress(); loadSessions(); loadBodyWeights(); loadMaxes(); renderMaxAdd();
+}
+
+function loadProgress(){
+  sb.from('athlete_progress').select('*').eq('athlete_id',selClient.id).maybeSingle()
+   .then(function(r){
+     var p=r.data, b=$('progressBox'); if(!b) return;
+     b.innerHTML = p
+       ? '<div class="lbl">Currently On</div><div style="font-size:16px;color:var(--gold);font-weight:700">Week '+
+         (p.current_week||1)+' · Day '+(p.current_day||1)+'</div>'+
+         '<div>'+p.sessions_completed+' of '+p.sessions_total+' sessions</div>'
+       : '<span class="muted">No active programme</span>';
+   });
+}
+
+function loadAssignment(){
+  sb.from('assignments').select('id,status,start_date,season_id,programs(name,num_weeks,days_per_week)')
+    .eq('athlete_id',selClient.id).eq('status','active').maybeSingle()
+    .then(function(r){
+      var a=r.data, box=$('assignBox'); if(!box) return;
+      if(a){
+        box.innerHTML =
+          '<div class="row" style="justify-content:space-between">'+
+          '<div><div style="font-size:17px;font-weight:600">'+h(a.programs?a.programs.name:'—')+'</div>'+
+          '<div class="muted" style="font-size:12px">Started '+h(a.start_date)+
+          (a.programs?' · '+a.programs.num_weeks+' weeks × '+a.programs.days_per_week+' days':'')+'</div></div>'+
+          '<button class="danger" onclick="unassign(\''+a.id+'\')">End Block</button></div>';
+      } else {
+        box.innerHTML =
+          '<div class="grid3">'+
+          '<label class="f"><span>Programme</span><select id="asProg">'+
+            PROGRAMS.map(function(p){return '<option value="'+p.id+'">'+h(p.name)+' ('+p.num_weeks+'wk × '+p.days_per_week+'d)</option>';}).join('')+
+          '</select></label>'+
+          '<label class="f"><span>Start date</span><input id="asStart" type="date" value="'+new Date().toISOString().slice(0,10)+'"></label>'+
+          '<label class="f"><span>Season</span><select id="asSeason">'+txOpts('season',null,true)+'</select></label>'+
+          '</div><button class="primary" onclick="assign()">Assign Programme</button>';
+      }
+    });
+}
+
+function assign(){
+  sb.from('assignments').insert({
+    athlete_id:selClient.id, program_id:$('asProg').value, assigned_by:me.id,
+    start_date:$('asStart').value, season_id:$('asSeason').value||null, status:'active'
+  }).then(function(r){ if(r.error) alert(r.error.message); loadAssignment(); loadProgress(); });
+}
+function unassign(id){
+  if(!confirm('End this block? Logged sessions are kept.')) return;
+  sb.from('assignments').update({status:'completed',end_date:new Date().toISOString().slice(0,10)})
+    .eq('id',id).then(function(){ loadAssignment(); loadProgress(); });
+}
+
+function renderMaxAdd(){
+  var prim=EXERCISES.filter(function(e){return e.is_primary_lift;});
+  $('maxAdd').innerHTML =
+    '<label class="f" style="flex:2;margin:0"><span>Exercise</span><select id="mxEx">'+
+      prim.map(function(e){return '<option value="'+e.id+'">'+h(e.name)+'</option>';}).join('')+'</select></label>'+
+    '<label class="f" style="width:90px;margin:0"><span>Reps</span><input id="mxReps" type="number" value="1"></label>'+
+    '<label class="f" style="width:110px;margin:0"><span>Weight kg</span><input id="mxWt" type="number" step="0.5"></label>'+
+    '<label class="f" style="flex:1;margin:0"><span>Source</span><select id="mxSrc">'+
+      ['reported','tested','competition','coach_entered'].map(function(s){
+        return '<option value="'+s+'">'+s.replace('_',' ')+'</option>';}).join('')+'</select></label>'+
+    '<button class="primary" onclick="addMax()">Add</button><div id="mxErr" class="err"></div>';
+}
+function addMax(){
+  var w=parseFloat($('mxWt').value), r=parseInt($('mxReps').value);
+  if(!w||!r){ toast('mxErr','Enter reps and weight.'); return; }
+  sb.from('maxes').insert({
+    athlete_id:selClient.id, exercise_id:$('mxEx').value, reps:r, weight_kg:w,
+    source:$('mxSrc').value, entered_by:me.id, achieved_on:new Date().toISOString().slice(0,10)
+  }).then(function(res){
+    if(res.error){ toast('mxErr',res.error.message); return; }
+    $('mxWt').value=''; toast('mxErr','Max recorded.',true); loadMaxes();
+  });
+}
+function loadMaxes(){
+  sb.from('maxes').select('id,reps,weight_kg,achieved_on,source,exercises(name)')
+    .eq('athlete_id',selClient.id).eq('is_current',true).order('achieved_on',{ascending:false})
+    .then(function(r){
+      var d=r.data||[], b=$('maxBox'); if(!b) return;
+      b.innerHTML = d.length
+        ? '<table><thead><tr><th>Exercise</th><th>Rep Max</th><th>Weight</th><th>Date</th><th>Source</th><th></th></tr></thead><tbody>'+
+          d.map(function(m){ return '<tr><td>'+h(m.exercises?m.exercises.name:'—')+'</td><td>'+m.reps+'RM</td>'+
+            '<td style="color:var(--gold);font-weight:700">'+m.weight_kg+' kg</td><td>'+h(m.achieved_on)+'</td>'+
+            '<td class="muted">'+h(m.source)+'</td>'+
+            '<td><button class="sm danger" onclick="delMax(\''+m.id+'\')">Remove</button></td></tr>'; }).join('')+
+          '</tbody></table>'
+        : '<div class="muted">No maxes recorded. Week 1 weights will use the programme defaults.</div>';
+    });
+}
+function delMax(id){ sb.from('maxes').delete().eq('id',id).then(loadMaxes); }
+
+function loadSessions(){
+  sb.from('coach_session_overview').select('*').eq('athlete_id',selClient.id)
+    .order('session_date',{ascending:false}).then(function(r){
+      var rows=r.data||[], t=$('sessTable'); if(!t) return;
+      $('statS').textContent = rows.filter(function(x){return x.status==='completed';}).length+' / '+rows.length;
+      $('statL').textContent = rows.length ? (rows[0].session_date||'—') : '—';
+      t.innerHTML = rows.length
+        ? '<table><thead><tr><th>Date</th><th>Wk</th><th>Day</th><th>Primary</th><th>Weight</th>'+
+          '<th>ROLS</th><th>RPE</th><th>Asst</th><th>BW</th><th>Status</th></tr></thead><tbody>'+
+          rows.map(function(s){ return '<tr><td>'+h(s.session_date)+'</td><td>'+s.week+'</td>'+
+            '<td>'+h(s.day_label||('Day '+(s.day_index+1)))+'</td><td>'+h(s.primary_exercise||'—')+'</td>'+
+            '<td>'+(s.primary_weight!=null?s.primary_weight+' kg':'—')+'</td>'+
+            '<td style="color:var(--gold);font-weight:700">'+(s.rols!=null?s.rols:'—')+'</td>'+
+            '<td>'+(s.rpe!=null?s.rpe:'—')+'</td><td>'+s.assistance_sets+'</td>'+
+            '<td>'+(s.body_weight_kg!=null?s.body_weight_kg:'—')+'</td>'+
+            '<td>'+(s.status==='completed'?'<span class="pill done">Done</span>':'<span class="pill prog">Open</span>')+
+            '</td></tr>'; }).join('')+'</tbody></table>'
+        : '<div class="muted">Nothing logged yet.</div>';
+    });
+}
+
+function loadBodyWeights(){
+  sb.from('body_weights').select('weight_kg,measured_on').eq('athlete_id',selClient.id)
+    .order('measured_on').then(function(r){
+      var d=r.data||[]; if($('statW')) $('statW').textContent = d.length?(d[d.length-1].weight_kg+' kg'):'—';
+      var cv=$('bwChart'); if(!cv) return;
+      if(cv._chart) cv._chart.destroy();
+      if(d.length<2){ cv.parentElement.innerHTML='<div class="muted">Needs two weigh-ins to chart.</div>'; return; }
+      cv._chart=new Chart(cv,{type:'line',
+        data:{labels:d.map(function(x){return x.measured_on;}),
+          datasets:[{data:d.map(function(x){return x.weight_kg;}),borderColor:'#d2ab66',
+            backgroundColor:'rgba(210,171,102,.13)',borderWidth:2,pointRadius:3,tension:.3,fill:true}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+          scales:{x:{ticks:{color:'#8fa3ad',font:{size:10}},grid:{color:'#2c3d46'}},
+                  y:{ticks:{color:'#8fa3ad',font:{size:10},callback:function(v){return v+'kg';}},grid:{color:'#2c3d46'}}}}});
+    });
+}
+
+/* ========================= EXERCISE LIBRARY ========================== */
+function renderExercises(){
+  $('pane-exercises').innerHTML =
+   '<div style="display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start">'+
+     '<div class="card">'+
+       '<div class="row" style="justify-content:space-between;margin-bottom:10px">'+
+         '<div class="lbl">Exercises</div><button class="primary sm" onclick="newExercise()">+ New</button></div>'+
+       '<input id="exFilter" placeholder="Search…" oninput="renderExList()" style="margin-bottom:8px">'+
+       '<div id="exList" style="max-height:70vh;overflow:auto"></div>'+
+     '</div>'+
+     '<div id="exEditor"><div class="card muted">Select an exercise, or create one.</div></div>'+
+   '</div>';
+  renderExList();
+}
+
+function renderExList(){
+  var f=($('exFilter')&&$('exFilter').value||'').toLowerCase();
+  var list=EXERCISES.filter(function(e){ return !f || e.name.toLowerCase().indexOf(f)>=0; });
+  $('exList').innerHTML = list.map(function(e){
+    var mp=(tx('movement_pattern').filter(function(t){return t.id===e.movement_pattern_id;})[0]||{}).label||'';
+    var lt=(tx('load_type').filter(function(t){return t.id===e.load_type_id;})[0]||{}).label||'';
+    return '<div class="listitem'+(selExercise&&selExercise.id===e.id?' sel':'')+'" onclick="editExercise(\''+e.id+'\')">'+
+      '<div style="font-weight:600">'+h(e.name)+(e.is_primary_lift?' <span class="pill pri">Primary</span>':'')+'</div>'+
+      '<div class="muted" style="font-size:11px">'+h(mp)+(lt?' · '+h(lt):'')+'</div></div>';
+  }).join('') || '<div class="muted">No matches.</div>';
+}
+
+function newExercise(){ selExercise={ id:null, name:'', is_primary_lift:false, is_global:true }; renderExEditor(); renderExList(); }
+function editExercise(id){ selExercise=EXERCISES.filter(function(e){return e.id===id;})[0]; renderExEditor(); renderExList(); }
+
+function renderExEditor(){
+  var e=selExercise||{};
+  $('exEditor').innerHTML =
+   '<div class="card">'+
+     '<h2 style="font-size:18px;margin-bottom:14px">'+(e.id?'Edit Exercise':'New Exercise')+'</h2>'+
+     '<label class="f"><span>Name</span><input id="exName" value="'+h(e.name)+'"></label>'+
+     '<div class="grid2">'+
+       '<label class="f"><span>Movement Pattern</span><select id="exMP">'+txOpts('movement_pattern',e.movement_pattern_id,true)+'</select></label>'+
+       '<label class="f"><span>Load Type</span><select id="exLT">'+txOpts('load_type',e.load_type_id,true)+'</select></label>'+
+     '</div>'+
+     '<div class="grid2">'+
+       '<label class="f"><span>Intensity Zone</span><select id="exIZ">'+txOpts('intensity_zone',e.intensity_zone_id,true)+'</select></label>'+
+       '<label class="f"><span>Fatigue Cost</span><select id="exFC">'+txOpts('fatigue_cost',e.fatigue_cost_id,true)+'</select></label>'+
+     '</div>'+
+     '<label class="f"><span>Default Warm-Up Scheme</span><select id="exWU">'+
+       '<option value="">— none —</option>'+
+       SCHEMES.map(function(s){return '<option value="'+s.id+'"'+(s.id===e.default_warmup_scheme_id?' selected':'')+'>'+h(s.name)+'</option>';}).join('')+
+     '</select><div class="hint">Controls the warm-up ladder the athlete sees for this lift.</div></label>'+
+     '<div class="grid2">'+
+       '<label class="f"><span>Weight Increment (kg)</span><input id="exInc" type="number" step="0.5" value="'+(e.weight_increment||'')+'">'+
+         '<div class="hint">Barbell 2.5 · Dumbbell 1 · leave blank for bodyweight</div></label>'+
+       '<label class="f"><span>Fixed Weights (kg)</span><input id="exFixed" value="'+arrTxt(e.fixed_weights)+'">'+
+         '<div class="hint">Kettlebells: 4, 6, 8, 12, 16, 18, 20, 24, 28, 32</div></label>'+
+     '</div>'+
+     '<div class="grid3">'+
+       '<label class="f"><span>Min Reps</span><input id="exMinR" type="number" value="'+(e.min_programmable_reps||'')+'"></label>'+
+       '<label class="f"><span>Max Reps</span><input id="exMaxR" type="number" value="'+(e.max_programmable_reps||'')+'"></label>'+
+       '<label class="f"><span>Default Rest (sec)</span><input id="exRest" type="number" value="'+(e.default_rest_secs||'')+'"></label>'+
+     '</div>'+
+     '<div class="hint" style="margin:-6px 0 12px">Min and max reps are your programming guardrails — e.g. deadlift max 5, leg press max 10. Nothing enforces them yet.</div>'+
+     '<div class="row" style="margin-bottom:12px">'+
+       '<label style="display:flex;align-items:center;gap:7px;width:auto">'+
+         '<input type="checkbox" id="exPrim" '+(e.is_primary_lift?'checked':'')+' style="width:auto"> '+
+         '<span style="font-size:13px">Primary lift (eligible for max tracking)</span></label>'+
+       '<label style="display:flex;align-items:center;gap:7px;width:auto">'+
+         '<input type="checkbox" id="exUni" '+(e.is_unilateral?'checked':'')+' style="width:auto"> '+
+         '<span style="font-size:13px">Unilateral</span></label>'+
+     '</div>'+
+     '<label class="f"><span>Equipment &amp; Substitution Tags</span>'+
+       '<div id="exTags" style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;'+
+       'max-height:150px;overflow:auto;border:1px solid var(--border2);padding:8px;border-radius:6px"></div>'+
+       '<div class="hint">Exercises sharing tags can substitute for each other.</div></label>'+
+     '<label class="f"><span>Coaching Notes</span><textarea id="exNotes" rows="2">'+h(e.coaching_notes||'')+'</textarea></label>'+
+     '<div class="row"><button class="primary" onclick="saveExercise()">Save Exercise</button>'+
+       (e.id?'<button class="danger" onclick="deleteExercise()">Delete</button>':'')+
+       '<div id="exErr" class="err"></div></div>'+
+   '</div>';
+
+  var tags = tx('equipment').concat(tx('muscle_group')||[]);
+  $('exTags').innerHTML = tags.map(function(t){
+    return '<label style="display:flex;align-items:center;gap:5px;font-size:12px;width:auto">'+
+      '<input type="checkbox" class="extag" value="'+t.id+'" style="width:auto"> '+h(t.label)+'</label>'; }).join('');
+
+  if(e.id){
+    sb.from('exercise_tags').select('taxonomy_id').eq('exercise_id',e.id).then(function(r){
+      var have=(r.data||[]).map(function(x){return x.taxonomy_id;});
+      document.querySelectorAll('.extag').forEach(function(c){ c.checked = have.indexOf(c.value)>=0; });
+    });
+  }
+}
+
+function saveExercise(){
+  var name=$('exName').value.trim();
+  if(!name){ toast('exErr','Name is required.'); return; }
+  var rec={
+    name:name,
+    slug:name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''),
+    movement_pattern_id:$('exMP').value||null,
+    load_type_id:$('exLT').value||null,
+    intensity_zone_id:$('exIZ').value||null,
+    fatigue_cost_id:$('exFC').value||null,
+    default_warmup_scheme_id:$('exWU').value||null,
+    weight_increment:$('exInc').value?parseFloat($('exInc').value):null,
+    fixed_weights:nums($('exFixed').value).length?nums($('exFixed').value):null,
+    min_programmable_reps:$('exMinR').value?parseInt($('exMinR').value):null,
+    max_programmable_reps:$('exMaxR').value?parseInt($('exMaxR').value):null,
+    default_rest_secs:$('exRest').value?parseInt($('exRest').value):null,
+    is_primary_lift:$('exPrim').checked,
+    is_unilateral:$('exUni').checked,
+    coaching_notes:$('exNotes').value||null
+  };
+  var q = selExercise.id
+    ? sb.from('exercises').update(rec).eq('id',selExercise.id).select().single()
+    : sb.from('exercises').insert(Object.assign({created_by:me.id},rec)).select().single();
+
+  q.then(function(r){
+    if(r.error){ toast('exErr',r.error.message); return; }
+    var exId=r.data.id;
+    var chosen=[].slice.call(document.querySelectorAll('.extag')).filter(function(c){return c.checked;})
+                 .map(function(c){return {exercise_id:exId,taxonomy_id:c.value};});
+    return sb.from('exercise_tags').delete().eq('exercise_id',exId).then(function(){
+      return chosen.length ? sb.from('exercise_tags').insert(chosen) : null;
+    }).then(function(){
+      toast('exErr','Saved.',true);
+      return sb.from('exercises').select('*').order('name').then(function(rr){
+        EXERCISES=rr.data||[];
+        selExercise=EXERCISES.filter(function(x){return x.id===exId;})[0];
+        renderExList(); renderExEditor();
+      });
+    });
+  });
+}
+
+function deleteExercise(){
+  if(!confirm('Delete this exercise? Programmes using it will break.')) return;
+  sb.from('exercises').delete().eq('id',selExercise.id).then(function(r){
+    if(r.error){ toast('exErr',r.error.message); return; }
+    selExercise=null;
+    sb.from('exercises').select('*').order('name').then(function(rr){
+      EXERCISES=rr.data||[]; renderExercises();
+    });
+  });
+}
+
+/* ========================== PROGRAMME BUILDER ======================== */
+function renderProgrammes(){
+  $('pane-programmes').innerHTML =
+   '<div style="display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start">'+
+     '<div class="card">'+
+       '<div class="row" style="justify-content:space-between;margin-bottom:10px">'+
+         '<div class="lbl">Programmes</div><button class="primary sm" onclick="newProgramme()">+ New</button></div>'+
+       '<div id="progList"></div></div>'+
+     '<div id="progEditor"><div class="card muted">Select a programme, or create one.</div></div>'+
+   '</div>';
+  renderProgList();
+}
+
+function renderProgList(){
+  $('progList').innerHTML = PROGRAMS.length ? PROGRAMS.map(function(p){
+    var sp=(tx('sport_type').filter(function(t){return t.id===p.sport_type_id;})[0]||{}).label||'';
+    return '<div class="listitem'+(selProgram&&selProgram.id===p.id?' sel':'')+'" onclick="openProgramme(\''+p.id+'\')">'+
+      '<div style="font-weight:600">'+h(p.name)+(p.version>1?' <span class="muted">v'+p.version+'</span>':'')+'</div>'+
+      '<div class="muted" style="font-size:11px">'+p.num_weeks+' wk × '+p.days_per_week+' d'+(sp?' · '+h(sp):'')+'</div></div>';
+  }).join('') : '<div class="muted">No programmes yet.</div>';
+}
+
+function newProgramme(){
+  var name=prompt('Programme name?'); if(!name) return;
+  var weeks=parseInt(prompt('How many weeks?','4')||'4');
+  var days=parseInt(prompt('How many training days per week?','4')||'4');
+  sb.from('programs').insert({
+    name:name, coach_id:me.id, num_weeks:weeks, days_per_week:days, is_published:true,
+    sport_type_id:(tx('sport_type')[0]||{}).id, level_id:(tx('level')[1]||{}).id
+  }).select().single().then(function(r){
+    if(r.error){ alert(r.error.message); return; }
+    var pid=r.data.id;
+    // Create the days, each with an empty primary block ready to fill.
+    var days_ = [];
+    for(var i=0;i<days;i++) days_.push({program_id:pid,day_index:i,label:'Day '+(i+1)});
+    return sb.from('program_days').insert(days_).select().then(function(dr){
+      var blocks=(dr.data||[]).map(function(d){
+        return {program_day_id:d.id,block_index:0,block_type:'primary',rest_secs:120,label:'Primary Lift'};
+      });
+      return sb.from('program_blocks').insert(blocks);
+    }).then(function(){ return refreshProgrammes(pid); });
+  });
+}
+
+function refreshProgrammes(openId){
+  return sb.from('programs').select('*').order('name').then(function(r){
+    PROGRAMS=r.data||[]; renderProgList();
+    if(openId) openProgramme(openId);
+  });
+}
+
+function duplicateProgramme(){
+  if(!confirm('Duplicate this programme? The original is untouched.')) return;
+  var src=selProgram.meta;
+  sb.from('programs').insert({
+    name:src.name+' (copy)', coach_id:me.id, num_weeks:src.num_weeks, days_per_week:src.days_per_week,
+    sport_type_id:src.sport_type_id, level_id:src.level_id, season_id:src.season_id,
+    seed_percent:src.seed_percent, parent_program_id:src.id, version:(src.version||1)+1, is_published:true
+  }).select().single().then(function(r){
+    if(r.error){ alert(r.error.message); return; }
+    var newId=r.data.id;
+    var dayMap={};
+    return sb.from('program_days').select('*').eq('program_id',src.id).then(function(dr){
+      var rows=(dr.data||[]).map(function(d){
+        return {program_id:newId,day_index:d.day_index,label:d.label,cardio:d.cardio,
+                mobility:d.mobility,mobility_secs:d.mobility_secs,notes:d.notes};
+      });
+      return sb.from('program_days').insert(rows).select().then(function(nd){
+        (nd.data||[]).forEach(function(x){ dayMap[x.day_index]=x.id; });
+        return sb.from('program_blocks').select('*, program_days!inner(day_index,program_id)')
+                 .eq('program_days.program_id',src.id);
+      });
+    }).then(function(br){
+      var blks=(br.data||[]).map(function(b){
+        return {src:b.id, row:{program_day_id:dayMap[b.program_days.day_index],block_index:b.block_index,
+          block_type:b.block_type,rest_secs:b.rest_secs,rounds:b.rounds,time_trial:b.time_trial,
+          label:b.label,notes:b.notes}};
+      });
+      return sb.from('program_blocks').insert(blks.map(function(x){return x.row;})).select().then(function(nb){
+        var map={};
+        (nb.data||[]).forEach(function(x){ map[x.program_day_id+'|'+x.block_index]=x.id; });
+        return sb.from('program_items').select('*, program_blocks!inner(block_index, program_days!inner(day_index,program_id))')
+          .eq('program_blocks.program_days.program_id',src.id).then(function(ir){
+            var items=(ir.data||[]).map(function(it){
+              var key=dayMap[it.program_blocks.program_days.day_index]+'|'+it.program_blocks.block_index;
+              return {program_block_id:map[key],exercise_id:it.exercise_id,item_index:it.item_index,
+                sets_by_week:it.sets_by_week,reps_by_week:it.reps_by_week,
+                target_reps_by_week:it.target_reps_by_week,seed_weight_by_week:it.seed_weight_by_week,
+                warmup_type:it.warmup_type,warmup_scheme_id:it.warmup_scheme_id,
+                diff_label:it.diff_label,diff_unit:it.diff_unit,diff_placeholder:it.diff_placeholder,
+                notes:it.notes};
+            }).filter(function(x){return x.program_block_id;});
+            return items.length ? sb.from('program_items').insert(items) : null;
+          });
+      });
+    }).then(function(){ return refreshProgrammes(newId); });
+  });
+}
+
+function openProgramme(id){
+  sb.rpc('get_program_payload',{p_program_id:id}).then(function(r){
+    var meta=PROGRAMS.filter(function(p){return p.id===id;})[0];
+    selProgram={ id:id, meta:meta, payload:r.data };
+    selDay=0;
+    renderProgEditor();
+    renderProgList();
+  });
+}
+
+function renderProgEditor(){
+  var m=selProgram.meta, pl=selProgram.payload||{};
+  var days=(pl.days||[]).slice().sort(function(a,b){return a.dayIndex-b.dayIndex;});
+  var dayTabs=days.map(function(d,i){
+    return '<button class="'+(i===selDay?'primary':'')+'" onclick="selDay='+i+';renderProgEditor()">'+h(d.label)+'</button>';
+  }).join('');
+
+  $('progEditor').innerHTML =
+   '<div class="card">'+
+     '<div class="row" style="justify-content:space-between;margin-bottom:12px">'+
+       '<h2 style="font-size:19px">'+h(m.name)+'</h2>'+
+       '<div class="row"><button onclick="duplicateProgramme()">Duplicate</button>'+
+         '<button class="danger" onclick="deleteProgramme()">Delete</button></div></div>'+
+     '<div class="grid4">'+
+       '<label class="f"><span>Name</span><input id="pgName" value="'+h(m.name)+'"></label>'+
+       '<label class="f"><span>Sport</span><select id="pgSport">'+txOpts('sport_type',m.sport_type_id,true)+'</select></label>'+
+       '<label class="f"><span>Level</span><select id="pgLevel">'+txOpts('level',m.level_id,true)+'</select></label>'+
+       '<label class="f"><span>Season</span><select id="pgSeason">'+txOpts('season',m.season_id,true)+'</select></label>'+
+     '</div>'+
+     '<div class="grid3">'+
+       '<label class="f"><span>Weeks</span><input id="pgWeeks" type="number" value="'+m.num_weeks+'"></label>'+
+       '<label class="f"><span>Days per week</span><input id="pgDays" type="number" value="'+m.days_per_week+'"></label>'+
+       '<label class="f"><span>Week 1 seed %</span><input id="pgSeed" type="number" step="1" value="'+(m.seed_percent||90)+'">'+
+         '<div class="hint">Percentage of a recorded rep max at the matching rep count.</div></label>'+
+     '</div>'+
+     '<button class="primary" onclick="saveProgMeta()">Save Details</button>'+
+     '<span id="pgErr" class="err" style="margin-left:10px"></span>'+
+   '</div>'+
+   '<div class="card"><div class="row" style="margin-bottom:12px">'+dayTabs+'</div>'+
+     '<div id="dayEditor"></div></div>';
+
+  renderDayEditor(days[selDay]);
+}
+
+function saveProgMeta(){
+  sb.from('programs').update({
+    name:$('pgName').value, sport_type_id:$('pgSport').value||null,
+    level_id:$('pgLevel').value||null, season_id:$('pgSeason').value||null,
+    num_weeks:parseInt($('pgWeeks').value), days_per_week:parseInt($('pgDays').value),
+    seed_percent:parseFloat($('pgSeed').value)||90
+  }).eq('id',selProgram.id).then(function(r){
+    if(r.error){ toast('pgErr',r.error.message); return; }
+    toast('pgErr','Saved.',true); refreshProgrammes(selProgram.id);
+  });
+}
+
+function deleteProgramme(){
+  if(!confirm('Delete this programme entirely? Athletes assigned to it will lose their workouts.')) return;
+  sb.from('programs').delete().eq('id',selProgram.id).then(function(r){
+    if(r.error){ alert(r.error.message); return; }
+    selProgram=null; refreshProgrammes(); renderProgrammes();
+  });
+}
+
+function renderDayEditor(d){
+  if(!d){ $('dayEditor').innerHTML='<div class="muted">No days. Set days per week and save.</div>'; return; }
+  var c=d.cardio||{}, cf=c.fields||[];
+  var blocks=(d.blocks||[]).slice().sort(function(a,b){return a.blockIndex-b.blockIndex;});
+
+  $('dayEditor').innerHTML =
+    '<div class="grid2" style="margin-bottom:6px">'+
+      '<label class="f"><span>Day label</span><input id="dyLabel" value="'+h(d.label)+'"></label>'+
+      '<label class="f"><span>Mobility drill</span><input id="dyMob" value="'+h(d.mobility||'')+'">'+
+        '<div class="hint">Leave blank for no mobility section.</div></label>'+
+    '</div>'+
+    '<div class="lbl" style="margin:12px 0 6px">Cardio Warm-Up</div>'+
+    '<div class="grid3">'+
+      '<label class="f"><span>Machine</span><input id="cdMachine" value="'+h(c.machine||'')+'"></label>'+
+      '<label class="f"><span>Duration</span><input id="cdDur" value="'+h(c.duration||'')+'"></label>'+
+      '<label class="f"><span>Target</span><input id="cdTarget" value="'+h(c.target||'')+'"></label>'+
+    '</div>'+
+    '<label class="f"><span>Fields to log</span><input id="cdFields" value="'+
+      h(cf.map(function(f){return f.key+':'+f.label+(f.unit?':'+f.unit:'');}).join(', '))+'">'+
+      '<div class="hint">Format: key:Label:unit — e.g. <code>speed:Speed:, cals:Calories:cal, dist:Distance (km):km</code></div></label>'+
+    '<button class="primary" onclick="saveDay()">Save Day</button>'+
+    '<span id="dyErr" class="err" style="margin-left:10px"></span>'+
+
+    '<div class="lbl" style="margin:22px 0 8px">Blocks</div>'+
+    '<div id="blockList">'+blocks.map(renderBlock).join('')+'</div>'+
+    '<div class="row" style="margin-top:8px">'+
+      '<button onclick="addBlock(\'single\')">+ Single</button>'+
+      '<button onclick="addBlock(\'superset\')">+ Superset</button>'+
+      '<button onclick="addBlock(\'triset\')">+ Triset</button>'+
+      '<button onclick="addBlock(\'circuit\')">+ Circuit</button>'+
+    '</div>';
+}
+
+function blockPill(t){
+  return t==='primary'?'<span class="pill pri">Primary</span>'
+       : t==='circuit'?'<span class="pill ci">Circuit</span>'
+       : t==='triset'?'<span class="pill tri">Triset</span>'
+       : t==='single'?'<span class="pill sing">Single</span>'
+       : '<span class="pill ss">Superset</span>';
+}
+
+function renderBlock(b){
+  var pl=selProgram.payload, weeks=selProgram.meta.num_weeks;
+  var items=(b.items||[]).slice().sort(function(a,b2){return a.itemIndex-b2.itemIndex;});
+  var isCirc=b.type==='circuit', isPri=b.type==='primary';
+
+  return '<div class="blockcard">'+
+    '<div class="row" style="justify-content:space-between;margin-bottom:8px">'+
+      '<div class="row">'+blockPill(b.type)+
+        '<span class="muted" style="font-size:12px">Block '+b.blockIndex+'</span></div>'+
+      '<div class="row">'+
+        '<label style="width:auto;font-size:11px" class="muted">Rest (s) '+
+          '<input type="number" value="'+(b.rest||0)+'" style="width:70px;display:inline-block" '+
+          'onchange="updBlock(\''+b.blockIndex+'\',\'rest_secs\',this.value)"></label>'+
+        (isCirc?'<label style="width:auto;font-size:11px" class="muted">Rounds '+
+          '<input value="'+arrTxt(b.rounds)+'" style="width:110px;display:inline-block" '+
+          'onchange="updBlock(\''+b.blockIndex+'\',\'rounds\',this.value)"></label>':'')+
+        (isPri?'':'<button class="danger sm" onclick="delBlock('+b.blockIndex+')">Remove</button>')+
+      '</div></div>'+
+    items.map(function(it){ return renderItem(b,it,weeks); }).join('')+
+    '<button class="sm" onclick="addItem('+b.blockIndex+')">+ Add Exercise</button>'+
+  '</div>';
+}
+
+function renderItem(b, it, weeks){
+  var isCirc=b.type==='circuit', isPri=b.type==='primary';
+  var key=b.blockIndex+'_'+it.itemIndex;
+  var exOpts=EXERCISES.map(function(e){
+    return '<option value="'+e.id+'"'+(e.id===it.exerciseId?' selected':'')+'>'+h(e.name)+'</option>'; }).join('');
+
+  return '<div class="itemrow">'+
+    '<div class="grid2">'+
+      '<label class="f"><span>Exercise</span><select id="it_'+key+'_ex">'+exOpts+'</select></label>'+
+      (isPri?'<label class="f"><span>Warm-Up Scheme</span><select id="it_'+key+'_wu">'+
+        '<option value="">— use exercise default —</option>'+
+        SCHEMES.map(function(s){return '<option value="'+s.id+'">'+h(s.name)+'</option>';}).join('')+
+        '</select></label>'
+      : isCirc?'<label class="f"><span>Difficulty prompt</span><input id="it_'+key+'_dl" value="'+h(it.diffLabel||'')+'" placeholder="e.g. Box height"></label>'
+      : '<div></div>')+
+    '</div>'+
+    (isCirc
+      ? '<div class="grid2">'+
+          '<label class="f"><span>Unit</span><input id="it_'+key+'_du" value="'+h(it.diffUnit||'')+'" placeholder="inch / kg"></label>'+
+          '<label class="f"><span>Placeholder</span><input id="it_'+key+'_dp" value="'+h(it.diffPlaceholder||'')+'" placeholder="e.g. 20"></label>'+
+        '</div>'
+      : '<div class="grid3">'+
+          '<label class="f"><span>Sets per week</span><input id="it_'+key+'_sets" value="'+arrTxt(it.setsByWeek)+'" placeholder="3, 3, 4, 4">'+
+            '<div class="hint">'+weeks+' values, comma separated</div></label>'+
+          '<label class="f"><span>Reps per week</span><input id="it_'+key+'_reps" value="'+arrTxt(it.repsByWeek)+'" placeholder="8, 8, 8-10, 8-10"></label>'+
+          '<label class="f"><span>Target reps</span><input id="it_'+key+'_treps" value="'+arrTxt(it.targetRepsByWeek)+'" placeholder="8, 8, 8, 8">'+
+            '<div class="hint">The number the ROLS ladder compares against</div></label>'+
+        '</div>')+
+    (isPri?'<div class="grid2">'+
+        '<label class="f"><span>Seed weight per week (kg)</span><input id="it_'+key+'_seed" value="'+arrTxt(it.seedWeightByWeek)+'" placeholder="60, 65">'+
+          '<div class="hint">Used when the athlete has no recorded max</div></label>'+
+        '<label class="f"><span>Warm-up type</span><select id="it_'+key+'_wt">'+
+          ['barbell','bodyweight','dumbbell','none'].map(function(w){
+            return '<option value="'+w+'"'+(w===it.warmupType?' selected':'')+'>'+w+'</option>';}).join('')+
+        '</select></label></div>':'')+
+    '<div class="row"><button class="primary sm" onclick="saveItem(\''+key+'\','+b.blockIndex+','+it.itemIndex+',\''+b.type+'\')">Save</button>'+
+      '<button class="danger sm" onclick="delItem('+b.blockIndex+','+it.itemIndex+')">Remove</button></div>'+
+  '</div>';
+}
+
+/* ---- day / block / item persistence ---- */
+function curDay(){ return (selProgram.payload.days||[]).slice()
+  .sort(function(a,b){return a.dayIndex-b.dayIndex;})[selDay]; }
+
+function dayDbId(){
+  return sb.from('program_days').select('id').eq('program_id',selProgram.id)
+    .eq('day_index',curDay().dayIndex).single();
+}
+
+function saveDay(){
+  var fields=strs($('cdFields').value).map(function(s){
+    var p=s.split(':'); return {key:(p[0]||'').trim(), label:(p[1]||p[0]||'').trim(), unit:(p[2]||'').trim()};
+  }).filter(function(f){return f.key;});
+  var cardio = $('cdMachine').value ? {
+    machine:$('cdMachine').value, duration:$('cdDur').value, target:$('cdTarget').value, fields:fields
+  } : null;
+  dayDbId().then(function(r){
+    return sb.from('program_days').update({
+      label:$('dyLabel').value, mobility:$('dyMob').value||null, cardio:cardio
+    }).eq('id',r.data.id);
+  }).then(function(res){
+    if(res && res.error){ toast('dyErr',res.error.message); return; }
+    toast('dyErr','Day saved.',true); openProgramme(selProgram.id);
+  });
+}
+
+function addBlock(type){
+  var d=curDay();
+  var next=Math.max.apply(null,[0].concat((d.blocks||[]).map(function(b){return b.blockIndex;})))+1;
+  dayDbId().then(function(r){
+    return sb.from('program_blocks').insert({
+      program_day_id:r.data.id, block_index:next, block_type:type,
+      rest_secs: type==='circuit'?0:90,
+      rounds: type==='circuit'?[21,15,10,6]:null,
+      time_trial: type==='circuit'
+    });
+  }).then(function(){ openProgramme(selProgram.id); });
+}
+
+function updBlock(bi, field, val){
+  var d=curDay();
+  dayDbId().then(function(r){
+    var patch={};
+    patch[field] = field==='rounds' ? nums(val) : (field==='rest_secs'?parseInt(val):val);
+    return sb.from('program_blocks').update(patch)
+      .eq('program_day_id',r.data.id).eq('block_index',parseInt(bi));
+  }).then(function(){ openProgramme(selProgram.id); });
+}
+
+function delBlock(bi){
+  if(!confirm('Remove this block? Logged history stays but will no longer match.')) return;
+  dayDbId().then(function(r){
+    return sb.from('program_blocks').delete().eq('program_day_id',r.data.id).eq('block_index',bi);
+  }).then(function(){ openProgramme(selProgram.id); });
+}
+
+function addItem(bi){
+  var d=curDay();
+  var blk=(d.blocks||[]).filter(function(b){return b.blockIndex===bi;})[0];
+  var next=(blk.items||[]).length;
+  var weeks=selProgram.meta.num_weeks;
+  dayDbId().then(function(r){
+    return sb.from('program_blocks').select('id').eq('program_day_id',r.data.id).eq('block_index',bi).single();
+  }).then(function(r){
+    return sb.from('program_items').insert({
+      program_block_id:r.data.id, exercise_id:EXERCISES[0].id, item_index:next,
+      sets_by_week:new Array(weeks).fill(3),
+      reps_by_week:new Array(weeks).fill('8'),
+      target_reps_by_week:new Array(weeks).fill(8)
+    });
+  }).then(function(){ openProgramme(selProgram.id); });
+}
+
+function saveItem(key, bi, ii, btype){
+  var g=function(s){ var e=$('it_'+key+'_'+s); return e?e.value:null; };
+  var patch={ exercise_id:g('ex') };
+  if(btype==='circuit'){
+    patch.diff_label=g('dl'); patch.diff_unit=g('du'); patch.diff_placeholder=g('dp');
+  } else {
+    patch.sets_by_week=nums(g('sets'));
+    patch.reps_by_week=strs(g('reps'));
+    patch.target_reps_by_week=nums(g('treps'));
+  }
+  if(btype==='primary'){
+    patch.seed_weight_by_week=nums(g('seed'));
+    patch.warmup_type=g('wt');
+    patch.warmup_scheme_id=g('wu')||null;
+  }
+  dayDbId().then(function(r){
+    return sb.from('program_blocks').select('id').eq('program_day_id',r.data.id).eq('block_index',bi).single();
+  }).then(function(r){
+    return sb.from('program_items').update(patch).eq('program_block_id',r.data.id).eq('item_index',ii);
+  }).then(function(res){
+    if(res && res.error){ alert(res.error.message); return; }
+    openProgramme(selProgram.id);
+  });
+}
+
+function delItem(bi, ii){
+  if(!confirm('Remove this exercise from the block?')) return;
+  dayDbId().then(function(r){
+    return sb.from('program_blocks').select('id').eq('program_day_id',r.data.id).eq('block_index',bi).single();
+  }).then(function(r){
+    return sb.from('program_items').delete().eq('program_block_id',r.data.id).eq('item_index',ii);
+  }).then(function(){ openProgramme(selProgram.id); });
+}
+</script>
+</body>
+</html>
